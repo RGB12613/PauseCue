@@ -53,6 +53,8 @@ catch {
     }
     Add-Type -AssemblyName PresentationFramework
     [System.Windows.MessageBox]::Show("Pause Cueの更新を完了できませんでした。`n`n$($_.Exception.Message)`n`n旧バージョンを起動します。", "Pause Cue 更新", 'OK', 'Warning') | Out-Null
-    if (Test-Path -LiteralPath $resolvedRestart) { Start-Process -FilePath $resolvedRestart }
+    if (-not (Get-Process -Id $ParentPid -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath $resolvedRestart)) {
+        Start-Process -FilePath $resolvedRestart
+    }
     exit 1
 }
