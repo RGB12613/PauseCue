@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using Application = System.Windows.Application;
 using Button = System.Windows.Controls.Button;
 using ComboBox = System.Windows.Controls.ComboBox;
@@ -13,6 +14,14 @@ public partial class ControlWindow : Window
 {
     private readonly BreakMonitor _monitor;
     private readonly GitHubReleaseUpdater _updater = new();
+    private readonly DispatcherTimer _updateTimer = new() { Interval = TimeSpan.FromHours(6) };
+    private GitHubReleaseUpdater.ReleaseInfo? _availableRelease;
+    private bool _updateInProgress;
+
+    /// <summary>Raised with the status title whenever the reminder status changes.</summary>
+    internal event Action<string>? StatusChanged;
+    /// <summary>Raised once per newly found release tag.</summary>
+    internal event Action<string>? UpdateAvailable;
 
     public ControlWindow()
     {
@@ -20,7 +29,9 @@ public partial class ControlWindow : Window
         _monitor = new BreakMonitor(this);
         SelectByTag(WorkIntervalBox, _monitor.Settings.WorkIntervalMinutes);
         SelectByTag(NightStartBox, _monitor.Settings.NightStartHour);
+        VersionText.Text = $"v{GitHubReleaseUpdater.CurrentVersion.ToString(3)}";
         Loaded += (_, _) => _monitor.Start();
+        _updateTimer.Tick += async (_, _) => await CheckForUpdatesInBackgroundAsync();
         Closing += (_, e) => { e.Cancel = true; Hide(); };
     }
 
@@ -28,6 +39,47 @@ public partial class ControlWindow : Window
     {
         StatusText.Text = title;
         DetailText.Text = detail;
+        StatusChanged?.Invoke(title);
+    }
+
+    /// <summary>Checks GitHub shortly after startup and then periodically, without showing errors.</summary>
+    internal async void StartBackgroundUpdateChecks()
+    {
+        await Task.Delay(TimeSpan.FromSeconds(15));
+        await CheckForUpdatesInBackgroundAsync();
+        _updateTimer.Start();
+    }
+
+    private async Task CheckForUpdatesInBackgroundAsync()
+    {
+        if (_updateInProgress) return;
+        try
+        {
+            var release = await _updater.CheckAsync();
+            if (release is null || release.Version <= GitHubReleaseUpdater.CurrentVersion) return;
+            var isNew = _availableRelease?.Tag != release.Tag;
+            _availableRelease = release;
+            ShowUpdateButtonState();
+            if (isNew) UpdateAvailable?.Invoke(release.Tag);
+        }
+        catch
+        {
+            // Offline or GitHub unavailable: stay quiet; the manual button still reports errors.
+        }
+    }
+
+    private void ShowUpdateButtonState()
+    {
+        if (_availableRelease is null)
+        {
+            UpdateButton.Content = "更新を確認";
+            UpdateButton.ClearValue(StyleProperty);
+            UpdateButton.ToolTip = null;
+            return;
+        }
+        UpdateButton.Content = $"{_availableRelease.Tag} に更新";
+        UpdateButton.Style = (Style)FindResource("PrimaryAction");
+        UpdateButton.ToolTip = "新しいバージョンがあります";
     }
 
     internal void UpdateWorkLog(double minutes, string path)
@@ -47,11 +99,13 @@ public partial class ControlWindow : Window
     private async void CheckForUpdatesClicked(object sender, RoutedEventArgs e)
     {
         UpdateButton.IsEnabled = false;
+        _updateInProgress = true;
         try
         {
             var release = await _updater.CheckAsync();
             if (release is null || release.Version <= GitHubReleaseUpdater.CurrentVersion)
             {
+                _availableRelease = null;
                 MessageBox.Show("Pause Cueは最新です。", "更新を確認", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
@@ -59,6 +113,7 @@ public partial class ControlWindow : Window
             var choice = MessageBox.Show(
                 $"新しいバージョン {release.Tag} があります。ダウンロードして再起動しますか？",
                 "Pause Cue 更新", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            _availableRelease = release;
             if (choice != MessageBoxResult.Yes) return;
 
             UpdateButton.Content = "ダウンロード中…";
@@ -72,7 +127,8 @@ public partial class ControlWindow : Window
         }
         finally
         {
-            UpdateButton.Content = "更新を確認";
+            _updateInProgress = false;
+            ShowUpdateButtonState();
             UpdateButton.IsEnabled = true;
         }
     }
