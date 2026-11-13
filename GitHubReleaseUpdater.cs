@@ -97,10 +97,15 @@ internal sealed class GitHubReleaseUpdater
         var helperDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PauseCue", "Updater");
         Directory.CreateDirectory(helperDirectory);
         var scriptPath = Path.Combine(helperDirectory, $"install-{Guid.NewGuid():N}.ps1");
-        File.Copy(scriptSource, scriptPath, overwrite: true);
+        // Windows PowerShell 5.1 reads BOM-less scripts using the ANSI code page, which breaks
+        // the Japanese text in the script. Always write the helper as UTF-8 with BOM.
+        var scriptText = File.ReadAllText(scriptSource, System.Text.Encoding.UTF8);
+        File.WriteAllText(scriptPath, scriptText, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
 
         var start = new ProcessStartInfo("powershell.exe")
         {
+            // Do not inherit the install folder as the working directory; it has to be replaced.
+            WorkingDirectory = helperDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
             WindowStyle = ProcessWindowStyle.Hidden
