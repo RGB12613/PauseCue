@@ -12,6 +12,7 @@ public partial class App
         var window = new ControlWindow();
         _trayIcon = new TrayIcon(window, Shutdown);
         window.Show();
+        window.StartBackgroundUpdateChecks();
     }
 
     protected override void OnExit(ExitEventArgs e)

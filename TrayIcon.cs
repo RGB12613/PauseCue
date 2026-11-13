@@ -27,11 +27,41 @@ public sealed class TrayIcon : IDisposable
         _icon = new Forms.NotifyIcon
         {
             Text = "Pause Cue — 休憩を促しています",
-            Icon = SystemIcons.Information,
+            Icon = LoadAppIcon(),
             ContextMenuStrip = menu,
             Visible = true
         };
         _icon.DoubleClick += (_, _) => ShowWindow();
+        _icon.BalloonTipClicked += (_, _) => ShowWindow();
+        _window.StatusChanged += SetStatus;
+        _window.UpdateAvailable += ShowUpdateNotice;
+    }
+
+    private static Icon LoadAppIcon()
+    {
+        try
+        {
+            var resource = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/PauseCue.ico"));
+            if (resource is not null)
+                using (var stream = resource.Stream) return new Icon(stream, Forms.SystemInformation.SmallIconSize);
+        }
+        catch
+        {
+            // Fall back to the stock icon if the resource cannot be read.
+        }
+        return SystemIcons.Information;
+    }
+
+    private void SetStatus(string status)
+    {
+        // NotifyIcon.Text is limited to 127 characters.
+        var text = $"Pause Cue — {status}";
+        _icon.Text = text.Length > 127 ? text[..127] : text;
+    }
+
+    private void ShowUpdateNotice(string tag)
+    {
+        _icon.ShowBalloonTip(8000, "Pause Cue の更新", $"新しいバージョン {tag} があります。画面の「{tag} に更新」から更新できます。", Forms.ToolTipIcon.Info);
     }
 
     private void ShowWindow() => _window.Dispatcher.Invoke(() => { _window.Show(); _window.WindowState = WindowState.Normal; _window.Activate(); });
@@ -50,5 +80,11 @@ public sealed class TrayIcon : IDisposable
             _startupItem.Checked = StartupRegistrar.IsEnabled;
         }
     }
-    public void Dispose() { _icon.Visible = false; _icon.Dispose(); }
+    public void Dispose()
+    {
+        _window.StatusChanged -= SetStatus;
+        _window.UpdateAvailable -= ShowUpdateNotice;
+        _icon.Visible = false;
+        _icon.Dispose();
+    }
 }
