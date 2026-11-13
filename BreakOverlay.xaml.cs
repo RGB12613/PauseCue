@@ -24,7 +24,7 @@ public partial class BreakOverlay : Window
         MessageText.Text = message;
         _delay = delay;
         _complete = complete;
-        LaterButton.Content = $"あと {_delay} 分だけ続ける · 長押し";
+        LaterButton.Content = $"あと {_delay} 分だけつづける";
         _holdTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
         _holdTimer.Tick += HoldTimerElapsed;
     }
@@ -35,7 +35,7 @@ public partial class BreakOverlay : Window
         _pressedButton = button;
         Mouse.Capture(button);
         _holdWatch.Restart();
-        HoldProgress.Value = 0;
+        UpdateButtonProgress(button, 0);
         HoldHintText.Text = "押し続けてください…";
         _holdTimer.Start();
         e.Handled = true;
@@ -45,29 +45,45 @@ public partial class BreakOverlay : Window
     {
         _holdTimer.Stop();
         if (Mouse.Captured == sender) Mouse.Capture(null);
+        if (sender is Button button) ResetProgress(button);
         _pressedButton = null;
-        ResetProgress();
         e.Handled = true;
     }
 
     private void ActionButtonCaptureLost(object sender, MouseEventArgs e)
     {
         _holdTimer.Stop();
+        if (sender is Button button) ResetProgress(button);
         _pressedButton = null;
-        ResetProgress();
     }
 
-    private void ResetProgress()
+    private void ActionButtonSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (sender is not Button button) return;
+        var progress = button == _pressedButton
+            ? Math.Clamp(_holdWatch.Elapsed.TotalMilliseconds / HoldDurationMs, 0, 1)
+            : 0;
+        UpdateButtonProgress(button, progress);
+    }
+
+    private static void UpdateButtonProgress(Button button, double progress)
+    {
+        button.ApplyTemplate();
+        if (button.Template.FindName("PART_ProgressFill", button) is not Border fill) return;
+        fill.Width = Math.Max(0, button.ActualWidth * Math.Clamp(progress, 0, 1));
+    }
+
+    private void ResetProgress(Button button)
     {
         _holdWatch.Reset();
-        HoldProgress.Value = 0;
+        UpdateButtonProgress(button, 0);
         HoldHintText.Text = "ボタンを押し続けてください";
     }
 
     private void HoldTimerElapsed(object? sender, EventArgs e)
     {
         var progress = Math.Clamp(_holdWatch.Elapsed.TotalMilliseconds / HoldDurationMs, 0, 1);
-        HoldProgress.Value = progress;
+        if (_pressedButton is not null) UpdateButtonProgress(_pressedButton, progress);
         HoldHintText.Text = $"長押し中… {progress:P0}";
         if (progress < 1 || _pressedButton is null) return;
 
