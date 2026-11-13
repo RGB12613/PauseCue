@@ -11,17 +11,23 @@ namespace PauseCue;
 
 public partial class BreakOverlay : Window
 {
-    private readonly Action<int> _complete;
+    private readonly Action<bool> _complete;
     private readonly int _delay;
     private readonly DispatcherTimer _holdTimer;
     private readonly Stopwatch _holdWatch = new();
     private Button? _pressedButton;
     private const double HoldDurationMs = 850;
 
-    public BreakOverlay(string message, int delay, Action<int> complete)
+    public BreakOverlay(string message, int delay, Action<bool> complete, bool night = false)
     {
         InitializeComponent();
         MessageText.Text = message;
+        if (night)
+        {
+            AccentBar.Visibility = Visibility.Collapsed;
+            NightBadge.Visibility = Visibility.Visible;
+            TitleText.Text = "夜も遅い時間です";
+        }
         _delay = delay;
         _complete = complete;
         LaterButton.Content = $"あと {_delay} 分だけつづける";
@@ -89,9 +95,9 @@ public partial class BreakOverlay : Window
 
         _holdTimer.Stop();
         _holdWatch.Stop();
-        var minutes = _pressedButton == LaterButton ? _delay : 3;
+        var tookBreak = _pressedButton != LaterButton;
         _pressedButton = null;
-        _complete(minutes);
+        _complete(tookBreak);
         Close();
     }
 }

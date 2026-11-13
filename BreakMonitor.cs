@@ -6,6 +6,7 @@ namespace PauseCue;
 public sealed class BreakMonitor : IDisposable
 {
     private readonly ControlWindow _window;
+    private const int NightReminderMinutes = 15;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(20) };
     private DateTime _continuousSince = DateTime.Now;
     private DateTime _lastCheck;
@@ -107,15 +108,26 @@ public sealed class BreakMonitor : IDisposable
         var text = manual
             ? "少し席を離れて、軽く体を動かしたり水分をとったりしましょう。"
             : night
-                ? "画面から目を離して、目と体を休めてみませんか？"
+                ? $"夜間モード中は作業時間に関係なく、{NightReminderMinutes} 分ごとにお知らせします。画面から目を離して、目と体を休めてみませんか？"
                 : "集中を続けるための小さな休憩です。伸びをする、水を飲む、遠くを見るなど、どれか一つで十分です。";
-        var overlay = new BreakOverlay(text, delay, minutes =>
+        var overlay = new BreakOverlay(text, delay, tookBreak =>
         {
-            _nextPrompt = DateTime.Now.AddMinutes(minutes);
-            _postponeCount++;
+            var now = DateTime.Now;
             _overlayVisible = false;
-            if (minutes == 3) _continuousSince = DateTime.Now;
-        });
+            if (tookBreak)
+            {
+                // A break was taken: restart the work interval and don't nag again until it has elapsed.
+                // In night mode "due" is always true, so this is what spaces out night reminders.
+                _continuousSince = now;
+                _postponeCount = 0;
+                _nextPrompt = now.AddMinutes(night ? NightReminderMinutes : Settings.WorkIntervalMinutes);
+            }
+            else
+            {
+                _nextPrompt = now.AddMinutes(delay);
+                _postponeCount++;
+            }
+        }, night: night && !manual);
         overlay.Closed += (_, _) => _overlayVisible = false;
         overlay.Show();
     }
