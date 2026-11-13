@@ -4,17 +4,47 @@
         WindowStyle="None" ResizeMode="NoResize" WindowState="Maximized" Topmost="True"
         Background="#E8172033" ShowInTaskbar="False" FontFamily="Segoe UI">
     <Window.Resources>
+        <ControlTemplate x:Key="PrimaryProgressTemplate" TargetType="{x:Type Button}">
+            <Border Background="{TemplateBinding Background}" CornerRadius="10" SnapsToDevicePixels="True">
+                <Grid ClipToBounds="True">
+                    <Border x:Name="PART_ProgressFill" Width="0" HorizontalAlignment="Left"
+                            Background="#FF687CEB" CornerRadius="9" />
+                    <ContentPresenter ContentSource="Content" RecognizesAccessKey="True"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Margin="{TemplateBinding Padding}"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Grid>
+            </Border>
+        </ControlTemplate>
+        <ControlTemplate x:Key="QuietProgressTemplate" TargetType="{x:Type Button}">
+            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" SnapsToDevicePixels="True">
+                <Grid ClipToBounds="True">
+                    <Border x:Name="PART_ProgressFill" Width="0" HorizontalAlignment="Left"
+                            Background="#FFE1E5F5" CornerRadius="9" />
+                    <ContentPresenter ContentSource="Content" RecognizesAccessKey="True"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Margin="{TemplateBinding Padding}"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Grid>
+            </Border>
+        </ControlTemplate>
         <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource AccentButton}">
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#5267C8" />
-            <Setter Property="BorderBrush" Value="#5267C8" />
+            <Setter Property="Background" Value="#FF7C91E6" />
+            <Setter Property="BorderBrush" Value="#FF7C91E6" />
             <Setter Property="Padding" Value="18,13" />
             <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Template" Value="{StaticResource PrimaryProgressTemplate}" />
         </Style>
         <Style x:Key="QuietButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="#F7F8FC" />
             <Setter Property="BorderBrush" Value="#E1E5EF" />
             <Setter Property="Padding" Value="18,12" />
+            <Setter Property="Template" Value="{StaticResource QuietProgressTemplate}" />
         </Style>
     </Window.Resources>
     <Grid>
@@ -25,15 +55,13 @@
                 <Border Width="52" Height="5" CornerRadius="3" Background="#DDE3F7" HorizontalAlignment="Left" Margin="0,0,0,24" />
                 <TextBlock Text="少し休憩しましょう" FontSize="27" FontWeight="Bold" Foreground="#20283A" />
                 <TextBlock x:Name="MessageText" Margin="0,12,0,26" FontSize="15" LineHeight="24" Foreground="#68738A" TextWrapping="Wrap" />
-                <Button x:Name="BreakButton" Content="３分休憩しました · 長押し" Style="{StaticResource PrimaryButton}"
+                <Button x:Name="BreakButton" Content="３分休憩しました" Style="{StaticResource PrimaryButton}"
                         PreviewMouseLeftButtonDown="ActionButtonPressed" PreviewMouseLeftButtonUp="ActionButtonReleased"
-                        LostMouseCapture="ActionButtonCaptureLost" />
+                        LostMouseCapture="ActionButtonCaptureLost" SizeChanged="ActionButtonSizeChanged" />
                 <Button x:Name="LaterButton" Margin="0,10,0,0" Style="{StaticResource QuietButton}"
                         PreviewMouseLeftButtonDown="ActionButtonPressed" PreviewMouseLeftButtonUp="ActionButtonReleased"
-                        LostMouseCapture="ActionButtonCaptureLost" />
+                        LostMouseCapture="ActionButtonCaptureLost" SizeChanged="ActionButtonSizeChanged" />
                 <TextBlock x:Name="HoldHintText" Text="ボタンを押し続けてください" Margin="2,22,0,8" FontSize="12" Foreground="#68738A" />
-                <ProgressBar x:Name="HoldProgress" Minimum="0" Maximum="1" Value="0" Height="7"
-                             Background="#E9ECF4" Foreground="#6378D6" BorderThickness="0" />
             </StackPanel>
         </Border>
     </Grid>
