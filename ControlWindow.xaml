@@ -85,12 +85,13 @@
         <Grid Grid.Row="3" Margin="2,18,2,0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock x:Name="WorkLogText" Text="本日の記録: 0 分" VerticalAlignment="Center" Foreground="#68738A" FontSize="13" />
+                <TextBlock x:Name="WorkLogText" Text="本日の記録: 0 分" VerticalAlignment="Center" Foreground="#68738A" FontSize="13"
+                           Cursor="Hand" MouseLeftButtonUp="WorkLogTextClicked" />
                 <TextBlock x:Name="VersionText" Text="v0.0.0" VerticalAlignment="Center" Margin="14,0,0,0" Foreground="#A0A8B8" FontSize="12" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Button x:Name="UpdateButton" Content="更新を確認" Click="CheckForUpdatesClicked" Padding="12,8" Margin="0,0,8,0" />
-                <Button Content="作業ログを開く" Click="OpenWorkLogClicked" Padding="12,8" />
+                <Button Content="作業ログを見る" Click="OpenWorkLogClicked" Padding="12,8" />
             </StackPanel>
         </Grid>
     </Grid>

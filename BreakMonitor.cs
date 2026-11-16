@@ -14,8 +14,12 @@ public sealed class BreakMonitor : IDisposable
     private int _postponeCount;
     private bool _overlayVisible;
     private bool _sleeping;
+    private bool _disposed;
 
     public UserSettings Settings { get; } = UserSettings.Load();
+
+    /// <summary>Start of the session that is still running and not yet written to the log; null while asleep.</summary>
+    public DateTime? CurrentSessionStart => _sleeping || _disposed ? null : _continuousSince;
 
     public BreakMonitor(ControlWindow window)
     {
@@ -118,6 +122,7 @@ public sealed class BreakMonitor : IDisposable
             {
                 // A break was taken: restart the work interval and don't nag again until it has elapsed.
                 // In night mode "due" is always true, so this is what spaces out night reminders.
+                WorkLog.Record(_continuousSince, now, "Break");
                 _continuousSince = now;
                 _postponeCount = 0;
                 _nextPrompt = now.AddMinutes(night ? NightReminderMinutes : Settings.WorkIntervalMinutes);
@@ -134,6 +139,9 @@ public sealed class BreakMonitor : IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        if (!_sleeping) WorkLog.Record(_continuousSince, DateTime.Now, "Exit");
+        _disposed = true;
         _timer.Stop();
         SystemEvents.PowerModeChanged -= OnPowerModeChanged;
     }

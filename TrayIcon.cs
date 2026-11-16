@@ -19,6 +19,7 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add("Pause Cue を開く", null, (_, _) => ShowWindow());
         menu.Items.Add("\u4ECA\u304B\u3089\u4F11\u61A9\u3059\u308B", null, (_, _) => _window.Dispatcher.Invoke(() => _window.TakeBreakForTray()));
         menu.Items.Add("30 分一時停止", null, (_, _) => _window.Dispatcher.Invoke(() => _window.PauseForTray(30)));
+        menu.Items.Add("作業ログを見る", null, (_, _) => _window.Dispatcher.Invoke(() => _window.ShowWorkLog()));
         _startupItem = new Forms.ToolStripMenuItem("Windows 起動時に開始") { CheckOnClick = true, Checked = StartupRegistrar.IsEnabled };
         _startupItem.CheckedChanged += (_, _) => SetStartup(_startupItem.Checked);
         menu.Items.Add(_startupItem);

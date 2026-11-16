@@ -8,6 +8,10 @@ Download `PauseCue-win-x64.zip` from the [latest GitHub Release](https://github.
 
 After the first install, select **更新を確認** in the app to download and install newer GitHub Releases. The updater verifies the release asset digest, closes Pause Cue, replaces its install folder, and starts the new version. Settings and work logs are stored under `%LocalAppData%\PauseCue` and are preserved during updates.
 
+## Work log
+
+Select **作業ログを見る** (or click today's total, or use the tray menu) to open the work log viewer. It shows each day's work time on a 24-hour timeline, a 7-day trend chart, and a list of work sessions with what ended each one (away from the PC, sleep, a break, or quitting the app). The underlying data is `%LocalAppData%\PauseCue\work-log.csv`, which can be opened from the viewer.
+
 ## Build and publish
 
 Open `PauseCue.csproj` in Visual Studio and press F5 to use XAML Hot Reload while tuning the UI. See [DEVELOPMENT.md](DEVELOPMENT.md) for details.
