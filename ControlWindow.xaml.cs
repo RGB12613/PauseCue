@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -17,6 +15,7 @@ public partial class ControlWindow : Window
     private readonly DispatcherTimer _updateTimer = new() { Interval = TimeSpan.FromHours(6) };
     private GitHubReleaseUpdater.ReleaseInfo? _availableRelease;
     private bool _updateInProgress;
+    private WorkLogWindow? _workLogWindow;
 
     /// <summary>Raised with the status title whenever the reminder status changes.</summary>
     internal event Action<string>? StatusChanged;
@@ -85,16 +84,25 @@ public partial class ControlWindow : Window
     internal void UpdateWorkLog(double minutes, string path)
     {
         WorkLogText.Text = $"本日の記録: {(int)minutes / 60} 時間 {(int)minutes % 60} 分";
-        WorkLogText.ToolTip = path;
+        WorkLogText.ToolTip = "クリックで作業ログを表示";
     }
 
-    private void OpenWorkLogClicked(object sender, RoutedEventArgs e)
+    /// <summary>Shows the in-app work log viewer, reusing the open window if there is one.</summary>
+    internal void ShowWorkLog()
     {
-        var path = WorkLog.PathName;
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        if (!File.Exists(path)) File.WriteAllText(path, "Start,End,Minutes,Reason\r\n", new System.Text.UTF8Encoding(true));
-        Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        if (_workLogWindow is null)
+        {
+            _workLogWindow = new WorkLogWindow(() => _monitor.CurrentSessionStart);
+            _workLogWindow.Closed += (_, _) => _workLogWindow = null;
+        }
+        _workLogWindow.ShowDay(DateTime.Today);
+        _workLogWindow.Show();
+        if (_workLogWindow.WindowState == WindowState.Minimized) _workLogWindow.WindowState = WindowState.Normal;
+        _workLogWindow.Activate();
     }
+
+    private void OpenWorkLogClicked(object sender, RoutedEventArgs e) => ShowWorkLog();
+    private void WorkLogTextClicked(object sender, System.Windows.Input.MouseButtonEventArgs e) => ShowWorkLog();
 
     private async void CheckForUpdatesClicked(object sender, RoutedEventArgs e)
     {
@@ -119,6 +127,7 @@ public partial class ControlWindow : Window
             UpdateButton.Content = "ダウンロード中…";
             var package = await _updater.DownloadAndVerifyAsync(release);
             GitHubReleaseUpdater.StartInstaller(package, release.Tag);
+            ExitApplication();
             Application.Current.Shutdown();
         }
         catch (Exception ex)
