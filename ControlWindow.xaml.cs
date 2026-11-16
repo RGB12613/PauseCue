@@ -169,6 +169,7 @@ public partial class ControlWindow : Window
 
     private void ResumeClicked(object sender, RoutedEventArgs e) => _monitor.Resume();
     private void TakeBreakClicked(object sender, RoutedEventArgs e) => _monitor.TakeBreakNow();
+    internal void BringToFront() { Show(); WindowState = WindowState.Normal; Activate(); }
     internal void PauseForTray(int minutes) => _monitor.PauseFor(minutes);
     internal void TakeBreakForTray() => _monitor.TakeBreakNow();
     internal void ExitApplication() { _monitor.Dispose(); Closing -= (_, _) => { }; }
