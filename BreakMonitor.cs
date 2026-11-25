@@ -77,7 +77,9 @@ public sealed class BreakMonitor : IDisposable
         }
         if (Settings.PausedUntil > now)
         {
-            _window.ShowStatus("一時停止中", $"{Settings.PausedUntil:HH:mm} に通知を再開します。");
+            var until = Settings.PausedUntil.Value;
+            var resumeAt = until.Date == now.Date ? until.ToString("HH:mm") : until.ToString("M/d HH:mm");
+            _window.ShowStatus("一時停止中", $"{resumeAt} に通知を再開します。");
             return;
         }
 

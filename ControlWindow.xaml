@@ -73,8 +73,12 @@
                     <TextBlock Text="一時停止" Style="{StaticResource SectionLabel}" />
                     <WrapPanel Margin="0,9,0,0">
                         <Button Content="今すぐ休憩" Style="{StaticResource PrimaryAction}" Click="TakeBreakClicked" Margin="0,0,8,8" />
-                        <Button Content="30 分" Tag="30" Click="PauseClicked" Margin="0,0,8,8" />
-                        <Button Content="2 時間" Tag="120" Click="PauseClicked" Margin="0,0,8,8" />
+                        <ComboBox x:Name="PauseDurationBox" Width="110" Margin="0,0,8,8" VerticalAlignment="Center" SelectedIndex="0">
+                            <ComboBoxItem Content="1 時間" Tag="60"/><ComboBoxItem Content="2 時間" Tag="120"/><ComboBoxItem Content="3 時間" Tag="180"/>
+                            <ComboBoxItem Content="4 時間" Tag="240"/><ComboBoxItem Content="6 時間" Tag="360"/><ComboBoxItem Content="8 時間" Tag="480"/>
+                            <ComboBoxItem Content="12 時間" Tag="720"/><ComboBoxItem Content="24 時間" Tag="1440"/>
+                        </ComboBox>
+                        <Button Content="一時停止" Click="PauseClicked" Margin="0,0,8,8" />
                         <Button Content="一時停止を解除" Click="ResumeClicked" Margin="0,0,0,8" />
                     </WrapPanel>
                     <TextBlock Text="先送りは 5 分、15 分、30 分の順に延長します。入力内容は記録しません。" Margin="0,5,0,0" Foreground="#8790A2" FontSize="12" TextWrapping="Wrap" />
