@@ -164,7 +164,7 @@ public partial class ControlWindow : Window
 
     private void PauseClicked(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string minutes }) _monitor.PauseFor(int.Parse(minutes));
+        if (PauseDurationBox.SelectedItem is ComboBoxItem { Tag: string minutes }) _monitor.PauseFor(int.Parse(minutes));
     }
 
     private void ResumeClicked(object sender, RoutedEventArgs e) => _monitor.Resume();
